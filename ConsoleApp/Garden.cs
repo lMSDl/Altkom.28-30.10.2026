@@ -36,7 +36,8 @@
         //są one testowane pośrednio poprzez metody publiczne, które je wywołują
         private string FixDuplicatedName(string item)
         {
-            item += Items.Count(x => x.StartsWith(item)) + 1;
+            //item += Items.Count(x => x.StartsWith(item)) + 1;
+            item += Items.Count(x => x == item || (x.StartsWith(item) && x.Length > item.Length && int.TryParse(x.Substring(item.Length), out _))) + 1;
             return item;
         }
 

@@ -1,4 +1,5 @@
 ﻿using AutoFixture;
+using System.Dynamic;
 
 namespace ConsoleApp.Tests.xUnit
 {
@@ -56,7 +57,6 @@ namespace ConsoleApp.Tests.xUnit
 
         [Fact]
         //public void Plant_AddsCounterToName_WhenDuplicatedItem()
-        //public void Plant_WhenDuplicatedItem_ThenCounterAddedToName()
         public void Plant_DuplicatedName_CounterAddedToName()
         {
             // Arrange
@@ -73,6 +73,51 @@ namespace ConsoleApp.Tests.xUnit
             // Assert
             Assert.Contains(expectedName, garden.GetItems());
             //powinniśmy unikać asercji wielu rzeczy w jednym teście
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(5)]
+        public void Plant_WhenDuplicatedItem_ThenCounterAddedToName(int numberOfCopies)
+        {
+            // Arrange
+            int expectedCounter = numberOfCopies + 1; 
+            string duplicatedName = new Fixture().Create<string>();
+            string expectedName = duplicatedName + expectedCounter; 
+
+            Garden garden = new Garden(expectedCounter);
+            //dodajemy kilka kopii rośliny o tej samej nazwie
+            //unikamy jawnego użycia pętli, aby ograniczyć możliwość popełnienia błędu w pętli for
+            //jednak możemy użyć LINQ jako alternatywy, którą uznajemy za poprawnie działającą i przetestowaną
+            Enumerable.Repeat(duplicatedName, numberOfCopies)
+                .ToList()
+                .ForEach(name => garden.Plant(name));
+
+            // Act
+            garden.Plant(duplicatedName);
+
+            // Assert
+            Assert.Contains(expectedName, garden.GetItems());
+        }
+
+        [Theory]
+        [InlineData("sunflower", "sun")]
+        [InlineData("róża czerwona", "róża")]
+        public void Plant_NameIsSubstringOfAnotherName_DuplicationCounterNotAdded(string arrangeName, string actName)
+        {
+            //Arrange
+            const int MINIMAL_VALID_SIZE = 3;
+            Garden garden = new Garden(MINIMAL_VALID_SIZE);
+            garden.Plant(actName);
+            garden.Plant(arrangeName);
+            string expectedName = actName + "2"; //oczekujemy, że przy dodaniu rośliny o tej samej nazwie, zostanie dodany licznik do nazwy
+
+            // Act
+            garden.Plant(actName);
+
+            // Assert
+            Assert.Contains(expectedName, garden.GetItems());
         }
 
         [Fact]
@@ -93,7 +138,7 @@ namespace ConsoleApp.Tests.xUnit
             AssertException<ArgumentNullException>(action, "item");
         }
 
-        [Fact]
+        [Fact(Skip = "Replaced by Plant_EmptyOrWhitespaceName_ThrowsArgumentException")]
         public void Plant_EmptyName_ThrowsArgumentException()
         {
             // Arrange
@@ -117,6 +162,42 @@ namespace ConsoleApp.Tests.xUnit
             Assert.Contains(expectedParamName, argumentException.ParamName);
             if (expectedMessage is not null)
                 Assert.Contains(expectedMessage, argumentException.Message);
+        }
+
+        public static IEnumerable<object[]> GetInvalidName()
+        {
+            yield return new object[] { "" };
+            yield return new object[] { " " };
+            yield return new object[] { " " }; //non-breaking space
+            yield return new object[] { "    " };
+            yield return new object[] { "\t" };
+            yield return new object[] { "  \n  \t" };
+        }
+
+
+        //Theory - testy z parametrami, które pozwalają na uruchomienie tej samej metody z różnymi danymi sprawdzającymi różne warunki (w tym brzegowe)
+        [Theory]
+        /*[InlineData("")]
+        [InlineData(" ")]
+        [InlineData(" ")]
+        [InlineData("    ")]
+        [InlineData("\t")]
+        [InlineData("  \n  \t")]*/
+        //[MemberData(nameof(GetInvalidName))]
+        [ClassData(typeof(GardenInvalidNames))]
+        public void Plant_EmptyOrWhitespaceName_ThrowsArgumentException(string invalidName)
+        {
+            // Arrange
+            const int MINIMAL_VALID_SIZE = 0;
+            Garden garden = new Garden(MINIMAL_VALID_SIZE);
+            string expectedParamName = "item";
+            // Act
+            //użycie Record.Exception powoduje, że wykonanie metody jest rzeczywiście tam gdzie chcemy, a nie w momencie wywołania metody Assert.Throws, co pozwala na dokładniejsze sprawdzenie, czy wyjątek został rzucony w odpowiednim miejscu
+            var record = Record.Exception(() => garden.Plant(invalidName));
+            // Assert
+            Assert.NotNull(record);
+            var argumentNullException = Assert.IsType<ArgumentException>(record);
+            Assert.Equal(expectedParamName, argumentNullException.ParamName);
         }
 
         [Fact]
