@@ -25,14 +25,22 @@
 
             if (Items.Contains(item))
             {
-                item += Items.Count(x => x.StartsWith(item)) + 1;
+                item = FixDuplicatedName(item);
             }
 
             Items.Add(item);
             return true;
         }
 
-        public IEnumerable<string> GetItems()
+        //nie testuje się metod prywatnych bezpośrednio
+        //są one testowane pośrednio poprzez metody publiczne, które je wywołują
+        private string FixDuplicatedName(string item)
+        {
+            item += Items.Count(x => x.StartsWith(item)) + 1;
+            return item;
+        }
+
+        internal IEnumerable<string> GetItems()
         {
             return Items.ToList();
         }
