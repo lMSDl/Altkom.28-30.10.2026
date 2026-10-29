@@ -7,5 +7,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("ConsoleApp.Tests.NUnit")]
 
 
-Garden garden = new Garden(3);
-garden.GetItems();
+Console.WriteLine("Hello, World!");
+
+
+//upublicznienie klasy Program, aby można było ją testować w projekcie testowym - alternatywa dla InternalsVisibleTo 
+//public partial class Program;
