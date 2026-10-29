@@ -1,4 +1,6 @@
 ﻿using AutoFixture;
+using ConsoleApp.Properties;
+using Moq;
 using System.Dynamic;
 
 namespace ConsoleApp.Tests.xUnit
@@ -33,7 +35,8 @@ namespace ConsoleApp.Tests.xUnit
             //nie używamy "magicznych" wartości, tylko takie, które mają znaczenie dla testu
             const int MINIMAL_VALID_SIZE = 2; //używamy parametru, który daje minimalny ale wystarczający rozmiar ogrodu, aby test mógł się wykonać
             const string VALID_NAME = "a"; //używamy parametru z minimalnym przekazem (ograniczamy możliwość nadinterpretacji)
-            Garden garden = new Garden(MINIMAL_VALID_SIZE);
+            Mock<ILogger> loggerStub = new Mock<ILogger>(); // stub - obiekt, który implementuje interfejs ILogger, ale nie wykonuje żadnej logiki używany aby móc przetestować klasę Garden bez zależności od implementacji Logger
+            Garden garden = new Garden(MINIMAL_VALID_SIZE, loggerStub.Object);
             // Act
             var result = garden.Plant(VALID_NAME);
             // Assert
@@ -225,6 +228,69 @@ namespace ConsoleApp.Tests.xUnit
             
             //Assert
             Assert.NotSame(items1, items2); //sprawdzamy, czy GetItems zwraca kopię kolekcji, a nie referencję do tej samej kolekcji
+        }
+
+        [Fact]
+        public void Plant_ValidName_MessageLogged()
+        {
+            const int MINIMAL_VALID_SIZE = 1; 
+            string validName = new Fixture().Create<string>();
+
+            Mock<ILogger> logger = new Mock<ILogger>();
+            //mock ma zareagować na wywołanie Log z dowolnym string
+            //logger.Setup(x => x.Log(It.IsAny<string>())).Verifiable(Times.Exactly(2)); //oznaczamy, że metoda Log powinna być wywołana, ale nie sprawdzamy jej argumentów
+            logger.Setup(x => x.Log(string.Format(Resources.PlantedInGarden, validName))).Verifiable(Times.Once); //oznaczamy, że metoda Log powinna być wywołana z konkretnym argumentem
+
+            Garden garden = new Garden(MINIMAL_VALID_SIZE, logger.Object);
+
+            // Act
+            var result = garden.Plant(validName);
+
+            // Assert
+            logger.VerifyAll(); //sprawdzamy, czy wszystkie metody oznaczone jako Verifiable zostały wywołane
+        }
+
+        [Fact]
+        public void Plant_DuplicatedName_MessageLogged()
+        {
+            const int MINIMAL_VALID_SIZE = 2;
+            var fixture = new Fixture();
+            string validName = fixture.Create<string>();
+            string duplicatedName = validName + "2";
+
+            Mock<ILogger> logger = new Mock<ILogger>();
+
+            Garden garden = new Garden(MINIMAL_VALID_SIZE, logger.Object);
+            garden.Plant(validName);
+            
+            // Act
+            var result = garden.Plant(validName);
+
+            // Assert
+            logger.Verify(x => x.Log(string.Format(Resources.PlantNameChanged, validName, duplicatedName)), Times.Once); //sprawdzamy, czy metoda Log została wywołana jeden raz z konkretnym argumentem
+            //logger.Verify(x => x.Log(It.Is<string>(x => x.Contains(duplicatedName))), Times.AtLeastOnce); //sprawdzamy, czy metoda Log została wywołana przynajmniej raz z argumentem, który zawiera string spełniający warunek (w tym przypadku zawierający nazwę rośliny z licznikiem)
+            //logger.Verify(x => x.Log(It.Is<string>(x => x.Contains(validName))), Times.Exactly(3));
+        }
+
+        [Fact]
+        public void GetLastLog_SingleLastLog()
+        {
+            // Arrange
+            var fixture = new Fixture();
+            const int INSIGNIFICANT_SIZE = 0;
+
+            var logger = new Mock<ILogger>();
+            var logs = fixture.CreateMany<string>().ToList();
+            logger.Setup(x => x.GetLogsAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+                .ReturnsAsync(string.Join("\n", logs));
+
+            var garden = new Garden(INSIGNIFICANT_SIZE, logger.Object);
+
+            //Act
+            var result = garden.GetLastLog();
+
+            //Assert
+            Assert.Equal(logs.Last(), result);
         }
     }
 }
