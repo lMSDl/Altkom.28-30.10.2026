@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="ConsoleApp.Tests.MSTest/ConsoleApp.Tests.MSTest.csproj" />
   <Project Path="ConsoleApp.Tests.xUnit/ConsoleApp.Tests.xUnit.csproj" />
   <Project Path="ConsoleApp/ConsoleApp.csproj" />
 </Solution>
