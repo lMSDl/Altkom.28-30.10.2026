@@ -5,6 +5,8 @@
   <Project Path="ConsoleApp/ConsoleApp.csproj" />
   <Project Path="Shop.Tests/Shop.Tests.csproj" />
   <Project Path="Shop/Shop.csproj" />
+  <Project Path="TDD.Tests/TDD.Tests.csproj" />
+  <Project Path="TDD/TDD.csproj" />
   <Project Path="WebAPI.Tests/WebAPI.Tests.csproj" />
   <Project Path="WebAPI/WebAPI.csproj" />
 </Solution>
