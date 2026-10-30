@@ -3,5 +3,6 @@
   <Project Path="ConsoleApp.Tests.NUnit/ConsoleApp.Tests.NUnit.csproj" />
   <Project Path="ConsoleApp.Tests.xUnit/ConsoleApp.Tests.xUnit.csproj" />
   <Project Path="ConsoleApp/ConsoleApp.csproj" />
+  <Project Path="Shop.Tests/Shop.Tests.csproj" />
   <Project Path="Shop/Shop.csproj" />
 </Solution>
