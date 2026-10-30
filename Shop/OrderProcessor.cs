@@ -1,6 +1,6 @@
 ﻿namespace Shop
 {
-    internal class OrderProcessor
+    public class OrderProcessor
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IInventoryService _inventoryService;
